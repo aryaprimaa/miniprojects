@@ -1,0 +1,63 @@
+version: "3.8"
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: shop-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: P@ssw0rd
+      MYSQL_DATABASE: shopdb
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      - shop-net
+
+  product-service:
+    build:
+      context: ./product-service
+    container_name: product-service
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: shopdb
+      DB_USER: aryaprimaa
+      DB_PASSWORD: P@ssw0rd
+    ports:
+      - "8081:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - shop-net
+
+  order-service:
+    build:
+      context: ./order-service
+    container_name: order-service
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: shopdb
+      DB_USER: aryaprimaa
+      DB_PASSWORD: P@ssw0rd
+    ports:
+      - "8082:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - shop-net
+
+volumes:
+  mysql_data:
+
+networks:
+  shop-net:
+    driver: bridge
